@@ -19,9 +19,9 @@ class MusicBot(commands.Bot):
 
         self.status_list = [
             "24/7 Bot Music",
-            "Free Use For All User",
-            "Use /play To Play Music",
-            "Use /help To See All Commands"
+            "Miễn phí cho mọi nhà",
+            "dùng /play để Play Music",
+            "dùng /help để thấy tất cả lệnh"
         ]
         self.status_index = 0
 

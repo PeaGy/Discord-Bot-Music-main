@@ -120,7 +120,7 @@ async def play_next(
                 embed.set_author(name=f"{bot.user.display_name} ✨", icon_url=bot.user.display_avatar.url)
             
             view = discord.ui.View()
-            view.add_item(discord.ui.Button(label="Đô nết me", url="https://github.com/PeaGy/", emoji="🤑"))
+            view.add_item(discord.ui.Button(label="Đô nết me", url="https://www.facebook.com/peagy.simp.lo/", emoji="🤑"))
             
             try:
                 await msg.edit(embed=embed, view=view)
