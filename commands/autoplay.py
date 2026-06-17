@@ -7,7 +7,7 @@ class AutoPlay(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="autoplay", description="Toggle Autoplay")
+    @app_commands.command(name="autoplay", description="🔀 Toggle Autoplay")
     async def autoplay(self, interaction: discord.Interaction):
 
         guild_id = interaction.guild.id

@@ -88,7 +88,7 @@ class MusicControl(discord.ui.View):
 
     @discord.ui.button(
         label="Loop",
-        emoji="🔁",
+        emoji="🔂",
         style=discord.ButtonStyle.secondary
     )
     async def loop(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -108,7 +108,7 @@ class MusicControl(discord.ui.View):
 
     @discord.ui.button(
         label="Autoplay",
-        emoji="🔁",
+        emoji="🔀",
         style=discord.ButtonStyle.secondary
     )
     async def autoplay(self, interaction: discord.Interaction, button: discord.ui.Button):
