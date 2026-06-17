@@ -8,7 +8,7 @@ class MusicControl(discord.ui.View):
         super().__init__(timeout=None)
         self.vc = vc
 
-    @discord.ui.button(label="Back", emoji="<:previous8:1505836696259006584>", style=discord.ButtonStyle.secondary)
+    @discord.ui.button(label="Back", emoji="⏮️", style=discord.ButtonStyle.secondary)
     async def back(self, interaction: discord.Interaction, button: discord.ui.Button):
         from music.player import history, queue, play_next
 
@@ -36,23 +36,23 @@ class MusicControl(discord.ui.View):
         await interaction.response.defer()
 
     # 👇 Diperbarui dengan custom emoji pause
-    @discord.ui.button(label="Pause", emoji="<:pause8:1469637308012826716>", style=discord.ButtonStyle.secondary)
+    @discord.ui.button(label="Pause", emoji="⏸️", style=discord.ButtonStyle.secondary)
     async def pause(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.vc.is_playing():
             self.vc.pause()
             button.label = "Resume"
             # 👇 Menggunakan custom emoji play
-            button.emoji = discord.PartialEmoji.from_str("<:play8:1506851348967063614>")
+            button.emoji = discord.PartialEmoji.from_str("▶️")
         else:
             self.vc.resume()
             button.label = "Pause"
             # 👇 Kembali ke custom emoji pause
-            button.emoji = discord.PartialEmoji.from_str("<:pause8:1469637308012826716>")
+            button.emoji = discord.PartialEmoji.from_str("⏸️")
 
         await interaction.response.edit_message(view=self)
 
     # 👇 Diperbarui dengan custom emoji stop
-    @discord.ui.button(label="Stop", emoji="<:stop8:1506854118210277426>", style=discord.ButtonStyle.secondary)
+    @discord.ui.button(label="Stop", emoji="⏹️", style=discord.ButtonStyle.secondary)
     async def stop(self, interaction: discord.Interaction, button: discord.ui.Button):
         from music.player import queue, now_playing_messages
 
@@ -78,7 +78,7 @@ class MusicControl(discord.ui.View):
 
         await interaction.response.defer()
 
-    @discord.ui.button(label="Skip", emoji="<:next8:1505836654999638066>", style=discord.ButtonStyle.secondary)
+    @discord.ui.button(label="Skip", emoji="⏭️", style=discord.ButtonStyle.secondary)
     async def skip(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.vc.is_playing() or self.vc.is_paused():
             self.vc.skip_request = True
@@ -88,7 +88,7 @@ class MusicControl(discord.ui.View):
 
     @discord.ui.button(
         label="Loop",
-        emoji="",
+        emoji="🔁",
         style=discord.ButtonStyle.secondary
     )
     async def loop(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -108,7 +108,7 @@ class MusicControl(discord.ui.View):
 
     @discord.ui.button(
         label="Autoplay",
-        emoji="",
+        emoji="🔁",
         style=discord.ButtonStyle.secondary
     )
     async def autoplay(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -127,7 +127,7 @@ class MusicControl(discord.ui.View):
 
     @discord.ui.button(
         label="Lyric",
-        emoji="",
+        emoji="📝",
         style=discord.ButtonStyle.secondary
     )
     async def lyric(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -182,7 +182,7 @@ class MusicControl(discord.ui.View):
             lyrics = lyrics[:3997] + "..."
             
         embed = discord.Embed(
-            title=f"<:lirik:1506193967316996166> Lyrics: {title}",
+            title=f"🗣️ Lyrics: {title}",
             description=lyrics,
             color=0x2b2d31
         )
@@ -193,7 +193,7 @@ class RadioControl(discord.ui.View):
         super().__init__(timeout=None)
         self.vc = vc
         
-    @discord.ui.button(label="Down", emoji="<:volDOWN:1506818767018000485>", style=discord.ButtonStyle.secondary, row=0)
+    @discord.ui.button(label="Down", emoji="🔉", style=discord.ButtonStyle.secondary, row=0)
     async def vol_down(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.vc.source and isinstance(self.vc.source, discord.PCMVolumeTransformer):
             self.vc.source.volume = max(0.0, self.vc.source.volume - 0.1)
@@ -203,22 +203,22 @@ class RadioControl(discord.ui.View):
             await interaction.response.send_message("Volume control not available", ephemeral=True)
 
     # 👇 Diperbarui dengan custom emoji pause
-    @discord.ui.button(label="Pause", emoji="<:pause8:1469637308012826716>", style=discord.ButtonStyle.secondary, row=0)
+    @discord.ui.button(label="Pause", emoji="⏹️", style=discord.ButtonStyle.secondary, row=0)
     async def pause(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.vc.is_playing():
             self.vc.pause()
             button.label = "Resume"
             # 👇 Menggunakan custom emoji play
-            button.emoji = discord.PartialEmoji.from_str("<:play8:1506851348967063614>")
+            button.emoji = discord.PartialEmoji.from_str("▶️")
         else:
             self.vc.resume()
             button.label = "Pause"
             # 👇 Kembali ke custom emoji pause
-            button.emoji = discord.PartialEmoji.from_str("<:pause8:1469637308012826716>")
+            button.emoji = discord.PartialEmoji.from_str("⏸️")
         await interaction.response.edit_message(view=self)
 
     # 👇 Diperbarui dengan custom emoji stop
-    @discord.ui.button(label="Stop", emoji="<:stop8:1506854118210277426>", style=discord.ButtonStyle.secondary, row=0)
+    @discord.ui.button(label="Stop", emoji="⏹️", style=discord.ButtonStyle.secondary, row=0)
     async def stop(self, interaction: discord.Interaction, button: discord.ui.Button):
         from music.player import queue, now_playing_messages
         msg = now_playing_messages.pop(interaction.guild.id, None)
@@ -238,7 +238,7 @@ class RadioControl(discord.ui.View):
                 pass
         await interaction.response.defer()
 
-    @discord.ui.button(label="Up", emoji="<:volUP:1506818702295695411>", style=discord.ButtonStyle.secondary, row=0)
+    @discord.ui.button(label="Up", emoji="🔊", style=discord.ButtonStyle.secondary, row=0)
     async def vol_up(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.vc.source and isinstance(self.vc.source, discord.PCMVolumeTransformer):
             self.vc.source.volume = min(2.0, self.vc.source.volume + 0.1)
@@ -247,7 +247,7 @@ class RadioControl(discord.ui.View):
         else:
             await interaction.response.send_message("Volume control not available", ephemeral=True)
 
-    @discord.ui.button(label="Change", emoji="<:change8:1506819784933900330>", style=discord.ButtonStyle.secondary, row=1)
+    @discord.ui.button(label="Change", emoji="↪️", style=discord.ButtonStyle.secondary, row=1)
     async def change(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.defer(ephemeral=True)
         

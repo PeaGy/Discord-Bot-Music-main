@@ -78,17 +78,16 @@ class Play(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="play", description="Play A Music")
+    @app_commands.command(name="play", description="🎵 Phát nhạc")
     async def play(self, interaction: discord.Interaction, query: str):
+        await interaction.response.defer(thinking=True)
 
         # 🔒 USER HARUS DI VOICE
         if not interaction.user.voice:
             embed = discord.Embed(
                 title="Bạn cần ở kênh voice chat dumbass",
             )
-            return await interaction.response.send_message(
-                embed=embed
-            )
+            return await interaction.followup.send(embed=embed)
 
         user_channel = interaction.user.voice.channel
         vc = interaction.guild.voice_client
@@ -99,11 +98,7 @@ class Play(commands.Cog):
                 title="❌ Tôi đang ở kênh voice khác rùi",
                 description=f"I'm currently in **{vc.channel.name}**",
             )
-            return await interaction.response.send_message(
-                embed=embed
-            )
-
-        await interaction.response.defer(thinking=True)
+            return await interaction.followup.send(embed=embed)
 
         # 🔌 CONNECT JIKA BELUM
         if not vc:

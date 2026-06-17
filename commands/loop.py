@@ -4,7 +4,7 @@ async def setup(bot):
 
     @bot.tree.command(
         name="loop",
-        description="♾️ Toggle Loop Music"
+        description="🔁 Toggle Loop Music"
     )
     async def loop(interaction: discord.Interaction):
 
@@ -18,7 +18,7 @@ async def setup(bot):
                 ephemeral=True
             )
 
-        if not hasattr(bot, "♾️ looping"):
+        if not hasattr(bot, "🔁 looping"):
             bot.looping = False
 
         bot.looping = not bot.looping

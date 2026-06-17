@@ -12,6 +12,9 @@ class Stop(commands.Cog):
         description="⏹️ Stop The Music"
     )
     async def stop(self, interaction: discord.Interaction):
+        # 1. Giữ chỗ phản hồi ngay lập tức
+        await interaction.response.defer()
+        
         vc = interaction.guild.voice_client
 
         queue.clear()
@@ -24,14 +27,16 @@ class Stop(commands.Cog):
                 description="⏹️ **Stopped Playing**"
             )
 
-            await interaction.response.send_message(embed=embed)
+            # 2. Dùng followup.send vì đã defer ở trên
+            await interaction.followup.send(embed=embed)
 
         else:
             embed = discord.Embed(
                 description="❌ **Quả lê không có ở kênh voice chat nào**"
             )
 
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            # 3. Dùng followup.send vì đã defer ở trên
+            await interaction.followup.send(embed=embed, ephemeral=True)
 
 async def setup(bot):
     await bot.add_cog(Stop(bot))

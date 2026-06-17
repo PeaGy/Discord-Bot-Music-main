@@ -25,6 +25,7 @@ YDL_OPTIONS = {
     "quiet": True,
     "noplaylist": True,
     "default_search": "ytsearch",
+    "cookies": "cookies.txt",  # Đã cấu hình cookies
     "extractor_args": {"youtube": ["player_client=ios,android,web", "player_skip=webpage"]},
 }
 
@@ -62,9 +63,7 @@ async def start_idle_timer(vc: discord.VoiceClient, channel: discord.TextChannel
 
             if send_channel:
                 embed = discord.Embed(
-                    description="""Không bài nào được phát trong 3 phút, sủi đây 👋
-
-                    bạn có thể để tôi ở lại lâu hơn với command 247!"""
+                    description="""Không bài nào được phát trong 3 phút, sủi đây 👋\n\nbạn có thể để tôi ở lại lâu hơn với command 247!"""
                 )
                 try:
                     await send_channel.send(embed=embed)
@@ -117,10 +116,11 @@ async def play_next(
                 description="Tất cả nhạc đã được phát! You can add songs again\nusing `/play` command.",
                 color=0x2b2d31
             )
-            embed.set_author(name=f"{bot.user.display_name} ✨", icon_url=bot.user.display_avatar.url if bot.user.display_avatar else None)
+            if bot.user.display_avatar:
+                embed.set_author(name=f"{bot.user.display_name} ✨", icon_url=bot.user.display_avatar.url)
             
             view = discord.ui.View()
-            view.add_item(discord.ui.Button(label="Vote Now", url="https://github.com/PeaGy/", emoji="🤑"))
+            view.add_item(discord.ui.Button(label="Đô nết me", url="https://github.com/PeaGy/", emoji="🤑"))
             
             try:
                 await msg.edit(embed=embed, view=view)
@@ -186,7 +186,6 @@ async def play_next(
             try:
                 import re
                 
-                # Helper to fallback
                 def fallback_autoplay():
                     query = build_autoplay_query(song)
                     with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
@@ -208,8 +207,8 @@ async def play_next(
                     opts["noplaylist"] = False
                     
                     with yt_dlp.YoutubeDL(opts) as ydl:
-                        info = ydl.extract_info(mix_url, download=False)
-                        entries = [e for e in info.get("entries", []) if e.get("id") != video_id and e.get("title")]
+                        info_auto = ydl.extract_info(mix_url, download=False)
+                        entries = [e for e in info_auto.get("entries", []) if e.get("id") != video_id and e.get("title")]
                 
                 if not entries:
                     entries = fallback_autoplay()
@@ -252,45 +251,56 @@ async def play_next(
     )
 
     # ==============================
-    # NOW PLAYING EMBED
+    # NOW PLAYING EMBED (ĐÃ ĐƯỢC FIX LỖI)
     # ==============================
-    embed_title = "🍐 RADIO PANEL" if song.get("source") == "radio" else "🍐 MUSIC PANEL"
-    embed = discord.Embed(
-        title=embed_title,
-        description=f"**{song['title']}**",
-    )
+    try:
+        embed_title = "🍐 RADIO PANEL" if song.get("source") == "radio" else "🍐 MUSIC PANEL"
+        embed = discord.Embed(
+            title=embed_title,
+            description=f"**{song.get('title', 'Unknown')}**",
+            color=0x2b2d31
+        )
 
-    if song.get("thumbnail"):
-        embed.set_thumbnail(url=song["thumbnail"])
+        if song.get("thumbnail"):
+            embed.set_thumbnail(url=song["thumbnail"])
 
-    embed.add_field(
-        name="Requested By",
-        value=requester.mention if requester else "Autoplay",
-        inline=True,
-    )
+        embed.add_field(
+            name="Requested By",
+            value=requester.mention if requester else "Autoplay",
+            inline=True,
+        )
 
-    embed.add_field(
-        name="Duration",
-        value=f"{song.get('duration', 'Unknown')} sec",
-        inline=True,
-    )
+        embed.add_field(
+            name="Duration",
+            value=f"{song.get('duration', 'Unknown')} sec",
+            inline=True,
+        )
 
-    embed.add_field(
-        name="Author",
-        value=song.get("author") or info.get("uploader", "Unknown"),
-        inline=True,
-    )
+        embed.add_field(
+            name="Author",
+            value=song.get("author") or info.get("uploader", "Unknown"),
+            inline=True,
+        )
 
-    from music.controls import MusicControl, RadioControl
-    view = RadioControl(vc) if song.get("source") == "radio" else MusicControl(vc)
-    existing_msg = now_playing_messages.get(vc.guild.id)
-    
-    if existing_msg:
+        # Tránh lỗi sập chương trình nếu file controls.py thiếu class RadioControl
         try:
-            await existing_msg.edit(embed=embed, view=view)
-        except Exception:
+            from music.controls import RadioControl
+            view = RadioControl(vc) if song.get("source") == "radio" else MusicControl(vc)
+        except ImportError:
+            view = MusicControl(vc)
+
+        existing_msg = now_playing_messages.get(vc.guild.id)
+        
+        if existing_msg:
+            try:
+                await existing_msg.edit(embed=embed, view=view)
+            except Exception as edit_err:
+                print(f"[DEBUG] Lỗi edit tin nhắn cũ: {edit_err}")
+                msg = await channel.send(embed=embed, view=view)
+                now_playing_messages[vc.guild.id] = msg
+        else:
             msg = await channel.send(embed=embed, view=view)
             now_playing_messages[vc.guild.id] = msg
-    else:
-        msg = await channel.send(embed=embed, view=view)
-        now_playing_messages[vc.guild.id] = msg
+            
+    except Exception as e:
+        print(f"[ERROR] Lỗi không thể tạo bảng MUSIC PANEL: {e}")
