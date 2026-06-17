@@ -19,9 +19,8 @@ class MusicBot(commands.Bot):
 
         self.status_list = [
             "24/7 Bot Music",
-            "Miễn phí cho mọi nhà",
-            "dùng /play để Play Music",
-            "dùng /help để thấy tất cả lệnh"
+            "Use /play To Play Music",
+            "Use /help To See All Commands"
         ]
         self.status_index = 0
 
@@ -79,21 +78,94 @@ class MusicBot(commands.Bot):
         if task:
             task.cancel()
 
-    async def on_voice_state_update(self, member, before, after):
-        # Nếu bot rời khỏi kênh thoại
+async def on_voice_state_update(self, member, before, after):
+        # 1️⃣ IF BOT EXITS / DISCONNECTS FROM VC
         if member == self.user and before.channel is not None and after.channel is None:
-            # Matikan loop
+            # Turn off the loop
             if hasattr(self, "looping"):
                 self.looping = False
             
-            # Tắt chế độ tự động phát
             try:
-                from music.player import autoplay_guilds
+                from music.player import autoplay_guilds, now_playing_messages
+                
+                # Matikan autoplay
                 if member.guild.id in autoplay_guilds:
                     autoplay_guilds.remove(member.guild.id)
+                
+                # Clean the panel when the bot disconnects
+                msg = now_playing_messages.pop(member.guild.id, None)
+                if msg:
+                    try:
+                        await msg.delete()
+                    except:
+                        pass
             except ImportError:
                 pass
 
+        # 2️⃣ IF BOT IS MOVED TO A DIFFERENT VC (MOVE VC)
+        elif member == self.user and before.channel is not None and after.channel is not None and before.channel.id != after.channel.id:
+            try:
+                from music.player import now_playing_messages, text_channels, history
+                from music.controls import MusicControl, RadioControl
+                
+                guild_id = member.guild.id
+                vc = member.guild.voice_client
 
+                # Delete the panel in the old VC (if any)
+                old_msg = now_playing_messages.pop(guild_id, None)
+                if old_msg:
+                    try:
+                        await old_msg.delete()
+                    except:
+                        pass
+
+                # Direct text output to the new VC text chat
+                new_channel = after.channel
+                text_channels[guild_id] = new_channel
+
+                # Rebuild and send new panel if music is running
+                if vc and (vc.is_playing() or vc.is_paused()) and history:
+                    current_song = history[-1] # Get the currently playing song from history
+                    
+                    embed_title = "<a:vinyl:1468959873969426629> RADIO PANEL" if current_song.get("source") == "radio" else "<a:vinyl:1468959873969426629> MUSIC PANEL"
+                    embed = discord.Embed(
+                        title=embed_title,
+                        description=f"**{current_song.get('title', 'Unknown')}**",
+                    )
+
+                    if current_song.get("thumbnail"):
+                        embed.set_thumbnail(url=current_song["thumbnail"])
+
+                    requester = current_song.get("requester")
+                    embed.add_field(
+                        name="Requested By",
+                        value=requester.mention if requester else "Autoplay",
+                        inline=True,
+                    )
+                    
+                    embed.add_field(
+                        name="Duration",
+                        value=f"{current_song.get('duration', 'Unknown')} sec",
+                        inline=True,
+                    )
+                    
+                    embed.add_field(
+                        name="Author",
+                        value=current_song.get("author", "Unknown"),
+                        inline=True,
+                    )
+
+                    # Determine the view (Radio or Music)
+                    view = RadioControl(vc) if current_song.get("source") == "radio" else MusicControl(vc)
+                    
+                    # Send the panel to the new VC channel
+                    try:
+                        new_msg = await new_channel.send(embed=embed, view=view)
+                        now_playing_messages[guild_id] = new_msg
+                    except discord.Forbidden:
+                        print(f"❌ Tôi không có quyền gửi tin nhắn ở kênh này VC: {new_channel.name}")
+
+            except Exception as e:
+                print(f"Lỗi khi di chuyển panel bot: {e}")
 bot = MusicBot()
 bot.run(config.TOKEN)
