@@ -17,7 +17,7 @@ class Previous(commands.Cog):
 
         vc = interaction.guild.voice_client
 
-        # 🔒 Bot harus di voice
+        # 🔒 Bots must be in voice
         if not vc or not vc.is_connected():
             embed = discord.Embed(
                 description=(
@@ -30,7 +30,7 @@ class Previous(commands.Cog):
                 ephemeral=True
             )
 
-        # 🚫 Tidak ada lagu sebelumnya
+        # 🚫 No previous song
         if len(history) < 2:
             embed = discord.Embed(
                 description=(
@@ -42,22 +42,22 @@ class Previous(commands.Cog):
                 embed=embed
             )
 
-        # 🎵 Ambil lagu sebelumnya
+        # 🎵 Take the previous song
         current_song = history.pop()
         previous_song = history.pop()
 
-        # Masukkan kembali ke queue
+        # Put back in the queue
         queue.appendleft(current_song)
         queue.appendleft(previous_song)
 
-        # 🛑 Stop lagu sekarang
+        # 🛑 Stop the song now
         if vc.is_playing() or vc.is_paused():
             vc.is_previous_action = True
             vc.stop()
         else:
             await play_next(self.bot, vc, interaction.channel)
 
-        # 🎨 EMBED SUCCESS (TITLE JADI DESKRIPSI)
+        # 🎨 EMBED SUCCESS (TITLE BECOMES DESCRIPTION)
         embed = discord.Embed(
             description=(
                 "⏮️ **Playing Previous Song**"

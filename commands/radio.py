@@ -4,7 +4,7 @@ from discord.ext import commands
 import aiohttp
 
 class RadioView(discord.ui.View):
-    # Parameter query dihapus dari __init__
+    # Query parameters removed from __init__
     def __init__(self, interaction: discord.Interaction, is_change: bool = False):
         super().__init__(timeout=180)
         self.interaction = interaction
@@ -23,7 +23,7 @@ class RadioView(discord.ui.View):
             "hidebroken": "true"
         }
         
-        # Pengecekan query dihapus, langsung fetch top 500 stations
+        # Query checking removed, directly fetch top 500 stations
         async with aiohttp.ClientSession() as session:
             async with session.get(url, params=params, headers={'User-Agent': 'Jukebox Bot'}) as response:
                 if response.status == 200:
@@ -205,18 +205,18 @@ class Radio(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    # Parameter query dihapus dari command slash ini
+    # Query parameters are removed from this slash command
     @app_commands.command(name="radio", description="Play Internet Radio Stations Cross The World")
     async def radio(self, interaction: discord.Interaction):
         await interaction.response.defer()
         
-        # Panggilan RadioView disesuaikan (tanpa parameter query)
+        # Customized RadioView call (without query parameters)
         view = RadioView(interaction)
         await view.fetch_stations()
         
         if not view.stations:
             embed = discord.Embed(
-                description="<:Silang:1469196939072372952> No radio stations found.",
+                description="No radio stations found.",
                 color=0x2b2d31
             )
             return await interaction.followup.send(embed=embed)

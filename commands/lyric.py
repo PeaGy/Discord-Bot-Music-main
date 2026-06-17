@@ -4,7 +4,7 @@ import urllib.parse
 import re
 
 async def fetch_lyrics(title, artist=""):
-    # Bersihkan judul lagu untuk hasil pencarian yang lebih baik
+    # Clean up song titles for better search results
     clean_title = re.sub(r'\(.*?\)|\[.*?\]', '', title)
     clean_title = re.sub(r'(?i)(official|music video|lyric video|audio|video)', '', clean_title)
     clean_title = " ".join(clean_title.split())
