@@ -1,0 +1,15 @@
+note.txt
+config.py
+__pycache__/
+*/__pycache__/
+*/*/__pycache__/
+env/
+ENV/
+.venv/
+*.db
+*.sqlite3
+*.log
+requirements.txt
+.cache/
+.cache
+.txt
