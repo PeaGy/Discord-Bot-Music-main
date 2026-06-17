@@ -53,3 +53,18 @@ Dưới đây là danh sách các lệnh có sẵn trong bot này.:
 1. **Clone the Repository**: 
    ```bash
    git clone [https://github.com/YourUsername/YourMusicBot.git](https://github.com/YourUsername/YourMusicBot.git)
+
+## 🌹 How to Use
+1. **Create config.py to the main path (Discord-Bot-Music-main)**: 
+2. **Paste this from your config.py**
+   ```bash
+   TOKEN = "Your-Discord-Bot-Token"
+3. **Install dependence libaries:**
+   ```bash
+   pip install -U "discord.py[voice]"
+   pip install davey
+   pip install pynacl
+   winget install ffmpeg
+4. **Run**
+    ```
+    python bot.py
