@@ -1,8 +1,5 @@
-<div align="center">
-
-[![Forks][forks-shield]][forks-url] [![Stargazers][stars-shield]][stars-url] [![Issues][issues-shield]][issues-url] [![Unlicense License][license-shield]][license-url]
-
-</div>
+ALL THE CREDIT GOES TO Ryuz-V.
+CHECK HIM HERE 👉 https://github.com/Ryuz-V
 
 # Discord Music Bot
 
