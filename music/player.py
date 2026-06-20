@@ -95,6 +95,86 @@ def build_autoplay_query(song: dict) -> str:
 
     return " ".join(keywords)
 
+async def handle_autoplay(bot, vc, channel, song, guild_id):
+    from music.player import history, queue, autoplay_guilds
+
+    loop = bot.loop
+
+    def fetch_autoplay_data():
+        import re
+        # 1. Lấy danh sách các ID video đã phát trong History để không random trùng lại
+        played_ids = []
+        for h_song in history:
+            h_url = h_song.get("url", "")
+            h_match = re.search(r"(?:v=|/)([0-9A-Za-z_-]{11}).*", h_url)
+            if h_match:
+                played_ids.append(h_match.group(1))
+
+        url = song.get("url", "")
+        video_id = None
+        match = re.search(r"(?:v=|/)([0-9A-Za-z_-]{11}).*", url)
+        if match:
+            video_id = match.group(1)
+            played_ids.append(video_id) # Tránh lặp lại chính bài hiện tại
+
+        def fallback_autoplay():
+            query = build_autoplay_query(song)
+            with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
+                res = ydl.extract_info(f"ytsearch5:{query} related music", download=False)
+                return res.get("entries", [])
+
+        entries = []
+        if video_id:
+            mix_url = f"https://www.youtube.com/watch?v={video_id}&list=RD{video_id}"
+            opts = YDL_OPTIONS.copy()
+            opts["extract_flat"] = True
+            opts["playlist_end"] = 20 # Tăng lên 20 để có nhiều lựa chọn hơn sau khi lọc
+            opts["noplaylist"] = False
+            
+            try:
+                with yt_dlp.YoutubeDL(opts) as ydl:
+                    info = ydl.extract_info(mix_url, download=False)
+                    # 2. Lọc: Bỏ qua những bài không có title VÀ những bài đã nằm trong history
+                    entries = [e for e in info.get("entries", []) if e.get("id") not in played_ids and e.get("title")]
+            except:
+                pass
+        
+        if not entries:
+            entries = fallback_autoplay()
+            # Lọc lại history cho fallback
+            entries = [e for e in entries if e.get("id") not in played_ids]
+            
+        return entries
+
+    # 3. Đưa quá trình fetch yt-dlp vào executor để không làm lag bot
+    try:
+        entries = await loop.run_in_executor(None, fetch_autoplay_data)
+        
+        if entries:
+            picked = random.choice(entries[:5])
+            
+            thumb = None
+            if picked.get("thumbnail"):
+                thumb = picked.get("thumbnail")
+            elif picked.get("thumbnails") and len(picked["thumbnails"]) > 0:
+                thumb = picked["thumbnails"][0]["url"]
+                
+            queue.append({
+                "title": picked.get("title"),
+                "author": picked.get("uploader") or picked.get("channel") or "Unknown",
+                "url": picked.get("url") or picked.get("webpage_url"),
+                "duration": picked.get("duration"),
+                "thumbnail": thumb,
+                "requester": None,
+                "source": "youtube",
+            })
+        else:
+            print("[AUTOPLAY] Failed: No new entries found (might be stuck in a loop).")
+    except Exception as e:
+        print(f"[AUTOPLAY ERROR]: {e}")
+
+    # 4. GỌI NEXT SONG SAU KHI ĐÃ CÓ DATA
+    await play_next(bot, vc, channel)
 # ==============================
 # ▶️ PLAY NEXT SONG
 # ==============================
@@ -169,7 +249,6 @@ async def play_next(
         is_prev = getattr(vc, 'is_previous_action', False)
         is_stop = getattr(vc, 'stop_request', False)
 
-        # Reset flags
         if hasattr(vc, 'skip_request'): del vc.skip_request
         if hasattr(vc, 'is_previous_action'): del vc.is_previous_action
         if hasattr(vc, 'stop_request'): del vc.stop_request
@@ -180,66 +259,19 @@ async def play_next(
         # 🔁 LOOP MODE
         if getattr(bot, "looping", False) and not is_skip and not is_prev:
             queue.appendleft(song)
+            asyncio.run_coroutine_threadsafe(play_next(bot, vc, channel), bot.loop)
 
         # 🤖 AUTOPLAY MODE
         elif guild_id in autoplay_guilds and not queue and not is_prev:
-            try:
-                import re
-                
-                def fallback_autoplay():
-                    query = build_autoplay_query(song)
-                    with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
-                        res = ydl.extract_info(f"ytsearch5:{query} related music", download=False)
-                        return res.get("entries", [])
-
-                url = song.get("url", "")
-                video_id = None
-                match = re.search(r"(?:v=|/)([0-9A-Za-z_-]{11}).*", url)
-                if match:
-                    video_id = match.group(1)
-
-                entries = []
-                if video_id:
-                    mix_url = f"https://www.youtube.com/watch?v={video_id}&list=RD{video_id}"
-                    opts = YDL_OPTIONS.copy()
-                    opts["extract_flat"] = True
-                    opts["playlist_end"] = 15
-                    opts["noplaylist"] = False
-                    
-                    with yt_dlp.YoutubeDL(opts) as ydl:
-                        info_auto = ydl.extract_info(mix_url, download=False)
-                        entries = [e for e in info_auto.get("entries", []) if e.get("id") != video_id and e.get("title")]
-                
-                if not entries:
-                    entries = fallback_autoplay()
-                    
-                if entries:
-                    picked = random.choice(entries[:5])
-                    
-                    thumb = None
-                    if picked.get("thumbnail"):
-                        thumb = picked.get("thumbnail")
-                    elif picked.get("thumbnails") and len(picked["thumbnails"]) > 0:
-                        thumb = picked["thumbnails"][0]["url"]
-                        
-                    queue.append({
-                        "title": picked.get("title"),
-                        "author": picked.get("uploader") or picked.get("channel") or "Unknown",
-                        "url": picked.get("url") or picked.get("webpage_url"),
-                        "duration": picked.get("duration"),
-                        "thumbnail": thumb,
-                        "requester": None,
-                        "source": "youtube",
-                    })
-                else:
-                    print("Autoplay failed: No entries found")
-            except Exception as e:
-                print(f"Autoplay error: {e}")
-
-        asyncio.run_coroutine_threadsafe(
-            play_next(bot, vc, channel),
-            bot.loop,
-        )
+            # GỌI HÀM ASYNC Ở BACKGROUND (Không block luồng)
+            asyncio.run_coroutine_threadsafe(
+                handle_autoplay(bot, vc, channel, song, guild_id), 
+                bot.loop
+            )
+        
+        # ➡️ BÌNH THƯỜNG (CÒN QUEUE HOẶC SKIP)
+        else:
+            asyncio.run_coroutine_threadsafe(play_next(bot, vc, channel), bot.loop)
 
     # ▶️ PLAY AUDIO
     audio_source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(source, **FFMPEG_OPTIONS))
